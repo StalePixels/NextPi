@@ -1,5 +1,257 @@
-#!/bin/bash
-. /opt/nextpi/bin/func/nextpi-globals
-args_required $@
+#!/usr/bin/python -u
 
-echo "Coming Soonish"
+# Base us
+import argparse
+
+# Filecatcher
+import os
+import sys
+import tty
+import termios
+import select
+import fcntl
+from datetime import datetime
+import time
+usleep = lambda x: time.sleep(x/1000.0)
+bytecache = bytearray()
+
+
+timeout = " Timeout"
+ERROR = " ERROR\n"
+
+dirs = ['/', '/ram/', '/NextPi/']
+default_timeout = 1000
+current_version = "0.06A"
+
+
+def version():
+    verbose("version: "+current_version)
+    send_bytes(current_version)
+
+
+def exit(e):
+    termios.tcsetattr(stdin, termios.TCSADRAIN, old_settings)
+    fcntl.fcntl(stdin, fcntl.F_SETFL, old_flags)
+    os.system("stty echo")
+    # os.system("reset")
+    verbose("exiting gracefully...")
+    logfile.flush()
+    logfile.close()
+    sys.exit(e)
+
+
+def log(d):
+    logfile.write(d+'\n')
+    logfile.flush()
+
+
+def verbose(d):
+    if args.vl:
+        logfile.write(" V>  ")
+        log(d)
+
+
+def send_bytes(string):
+    sys.stderr.write(string)
+
+
+def get_bytes(length):
+    class TimeOut(Exception):
+        pass
+
+    t = default_timeout
+    try:
+        # Make sure we have a byte to read...
+        while sys.stdin not in select.select([sys.stdin], [], [], 0)[0]:
+            t = t - 1
+            usleep(1)
+            if t is 0:
+                raise TimeOut
+        # verbose("GOT "+ord(byte).__str__())
+    except TimeOut:
+        log("get_byte"+timeout+ERROR)
+        send_bytes(timeout+ERROR)
+        exit(255)
+
+    try:
+        buf = sys.stdin.read(length)
+    except IOError:
+        log("IOError")
+        send_bytes("IO"+ERROR)
+        exit(255)
+
+    return buf
+
+
+def get_byte():
+    class TimeOut(Exception):
+        pass
+
+    t = default_timeout
+    try:
+        # Make sure we have a byte to read...
+        while sys.stdin not in select.select([sys.stdin], [], [], 0)[0]:
+            t = t - 1
+            usleep(1)
+            if t is 0:
+                raise TimeOut
+        # Read the byte we know, for sure, is there...
+        byte = sys.stdin.read(1)
+        verbose("GOT "+ord(byte).__str__())
+    except TimeOut:
+        log("get_byte"+timeout+ERROR)
+        send_bytes(timeout+ERROR)
+        exit(255)
+
+    return ord(byte)
+
+
+def get_block_and_validate_nbn(blocklen, checksum_size):
+    while True:
+        block = bytearray()
+
+        while len(block) < blocklen:
+            usleep(10)
+            block.extend(get_bytes(blocklen - len(block)))
+
+        checksum = get_int(1)
+        computed = sum(block) % checksum_size
+
+        if checksum == computed:
+            send_bytes("!")     # send Client confirmation that things worked
+            return bytearray(block)
+
+        log(" (transmitted " + checksum.__str__() + " vs computed " + computed.__str__() + ") ERR")
+        send_bytes("<")         # send Client request to resent that block
+
+
+def get_block_and_validate_xor(blocklen):
+    while True:
+        block = bytearray()
+
+        while len(block) < blocklen:
+            usleep(10)
+            block.extend(get_bytes(blocklen - len(block)))
+
+        checksum = get_int(1)
+        #import em00k
+        #import zxrom
+        computed = checksum     # just pretend it worked)
+
+        if checksum == computed:
+            send_bytes("!")     # send Client confirmation that things worked
+            return bytearray(block)
+
+        log(" (transmitted " + checksum.__str__() + " vs computed " + computed.__str__() + ") ERR")
+        send_bytes("<")         # send Client request to resent that block
+
+
+def get_int(int_length):
+    verbose("Getting an int")
+    int_value = 0
+    while int_length:
+        verbose("getint "+"waiting for : "+int_length.__str__()+" bytes. ")
+        nextbyte = get_byte()
+        int_value = (int_value << 8) + nextbyte
+        verbose("getint "+"got: "+nextbyte.__str__()+" Value now: "+int_value.__str__()+". ")
+        int_length = int_length - 1
+    verbose("getint "+"final: "+int_value.__str__())
+    return int_value
+
+
+def get_string():
+    string = ""
+    byte = get_byte()
+    while byte is not 0:
+        string = string + str(unichr(byte))
+        verbose("getstring "+"got: "+byte.__str__()+" string now: "+string)
+        byte = get_byte()
+
+    verbose("getstring "+"final: "+string)
+    return string
+
+
+def file_catcher_nbn(blocksize, checksum_size):
+    label = "file_upload_nbn"
+    log("Starting "+label)
+
+    send_ok()
+    size = get_int(4)
+    log(" SIZ: "+size.__str__())
+    blocks = get_int(4)
+    log(" BLK: "+blocks.__str__())
+    remainder = get_int(2)
+    log(" REM: "+remainder.__str__())
+    filename = get_string()
+    log(" DIR: "+filename)
+    verbose(" BSZ: "+blocksize.__str__())
+    verbose(" CSZ: " + checksum_size.__str__())
+
+    if (blocks*blocksize)+remainder != size:
+        send_bytes("Size mismatch (blocks*blocksize)+remainder ("+((blocks*blocksize)+remainder).__str__()
+                   + ") != size ("+size.__str__()+") ERROR\n")
+        log("Size mismatch (blocks*blocksize)+remainder ("+((blocks*blocksize)+remainder).__str__()
+            + ") != size ("+size.__str__()+") ERROR\n")
+        exit(253)
+    else:
+        log("Header validated, awaiting packets")
+        send_ok()
+
+    if args.stream:
+        verbose(" Opening STDOUT")
+        out = sys.stdout
+    else:
+        verbose(" Opening "+dirs[1]+filename)
+        out = open(dirs[1]+filename, "wb")
+    while blocks:
+        block = get_block_and_validate_nbn(blocksize, checksum_size)
+        out.write(block)
+        verbose(" OK (" + blocks.__str__() + ")")
+        blocks = blocks - 1
+
+    block = get_block_and_validate_nbn(remainder, checksum_size)
+    out.write(block)
+    out.flush()
+    out.close()
+
+    log("Done "+label)
+
+
+def send_ok():
+    send_bytes("OK\n")
+
+
+def send_byte(byte):
+    sys.stderr.write(chr(byte))
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='NextPi File Receiver')
+
+    parser.add_argument('-v', action="store_true")          # Version, and done
+    parser.add_argument('-vl', action="store_true")         # Verbose Logging
+    parser.add_argument('-nbn',  action="store", type=int, default=0)    # Filecatcher (NBN)
+    parser.add_argument('-stream', action="store_true")     # Use stdout
+
+    args = parser.parse_args()
+
+    stdin = sys.stdin.fileno()
+
+    # Make stdin non blocking
+    old_flags = fcntl.fcntl(stdin, fcntl.F_GETFL)
+    fcntl.fcntl(stdin, fcntl.F_SETFL, old_flags | os.O_NONBLOCK)
+    old_settings = termios.tcgetattr(stdin)
+    tty.setraw(stdin)
+    logfile = open("/tmp/uihelper.log", "w")
+
+    verbose("log++")
+
+    if args.v:
+        version()
+        exit(0)
+
+    if args.nbn:
+        file_catcher_nbn(16384, args.nbn)
+        exit(0)
+
+    exit(0)
