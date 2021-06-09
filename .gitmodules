@@ -1,0 +1,3 @@
+[submodule "packages/sjasmplus/src"]
+	path = packages/sjasmplus/src
+	url = https://github.com/z00m128/sjasmplus.git
