@@ -1,0 +1,58 @@
+#!/bin/bash
+
+#We want to be root, it saves time later...
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+# Get our install dir
+NEXTPIPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; dirname `pwd -P` )"
+
+cd $NEXTPIPATH
+
+echo "Setting up NextPi development environment in `pwd`"
+
+echo "Updating package-database"
+apt update
+
+echo "Updating system"
+apt -y upgrade
+
+echo "Installing packages to match NextPi runtime..."
+echo -n "  building package list - Adding:"
+PACKAGE_LIST=""
+for p in `tail -n +3 "$NEXTPIPATH/docs/system-packages.txt" | cut -f 1`; do
+    echo -n " `echo $p | cut -d: -f1`"
+    PACKAGE_LIST+=" $p"
+done
+echo
+apt install -y $PACKAGE_LIST
+
+echo "Installing NextPi specific folder stucture to match NextPi runtime..."
+# RAMdir (faked to disk, since we can't conveniently always reboot the dev environment) 
+if [ -d "/ram" ] || [ -L "/ram" ] ; then
+    echo "  /ram already exists..."
+else
+    echo "  Symlinking /ram to $NEXTPIPATH/ram"
+    mkdir -pv "$NEXTPIPATH/ram"
+    ln -s "$NEXTPIPATH/ram" /ram 
+fi
+
+# Persistent Cache
+if [ -d "/PCache" ] || [ -L "/PCache" ]; then
+    echo "  /PCache already exists..."
+else
+    echo "  Symlinking /PCache to $NEXTPIPATH/PCache"
+    mkdir -pv "$NEXTPIPATH/PCache"
+    ln -s "$NEXTPIPATH/PCache" /PCache 
+fi
+
+# Userdir
+if [ -d "/NextPi" ] || [ -F "/NextPi" ]; then
+    echo "  /NextPi already exists..."
+else
+    echo "  Symlinking /NextPi to $NEXTPIPATH/userdir"
+    mkdir -pv "$NEXTPIPATH/userdir/nextpi"
+    ln -s "$NEXTPIPATH/userdir" /NextPi 
+fi
