@@ -325,3 +325,13 @@ xmp						install
 xxd						install
 xz-utils					install
 zlib1g:armhf					install
+espeak-ng					install
+fluidsynth					install
+fluid-soundfont-gm					install
+fluid-soundfont-gs					install
+freepats					install
+espeak-ng-data					install
+libespeak-ng1					install
+libfluidsynth1					install
+libpcaudio0					install
+libsonic0					install

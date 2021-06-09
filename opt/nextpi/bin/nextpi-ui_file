@@ -1,0 +1,650 @@
+#!/usr/bin/python -u
+
+# Base us
+import argparse
+
+# Filecatcher
+import os
+import sys
+import tty
+import termios
+import select
+import fcntl
+import struct
+# File Lister
+import glob
+import re
+from shutil import copyfile
+from datetime import datetime
+from collections import Iterable
+import time
+usleep = lambda x: time.sleep(x/1000.0)
+
+timeout = " Timeout"
+ERROR = " ERROR\n"
+
+partitions = ['/', '/ram/', '/NextPi/', '/PCache/']
+default_filter = "/*"
+default_timeout = 1000
+max_filesize = 4294967295
+current_version = "0.99E"
+
+
+# "System"
+def version():
+    verbose("version: "+current_version)
+    send_bytes(current_version)
+
+
+def exit(e):
+    if not args.debug:
+        termios.tcsetattr(stdin, termios.TCSADRAIN, old_stdin_settings)
+        fcntl.fcntl(stdin, fcntl.F_SETFL, old_stdin_flags)
+
+    verbose(" Verbose exiting gracefully - elapsed " + (datetime.now() - startTime).__str__())
+    logfile.flush()
+    logfile.close()
+    sys.exit(e)
+
+
+def log(d):
+    logfile.write(d+'\n')
+    logfile.flush()
+
+
+def verbose(d):
+    if args.vl:
+        logfile.write(" V>  ")
+        log(d)
+
+
+def veryverbose(d):
+    if args.vvl:
+        logfile.write(" V>  ")
+        log(d)
+
+
+# Comms primitives
+def send_bytes(string):
+    if isinstance(string, str):
+        b = bytearray()
+        b.extend(string)
+        string = b
+    veryverbose(" Transmitting: "+string.__str__())
+    for substr in range(0, len(string), 512):
+        verbose(substr.__str__()+" parts sent")
+        for i, v in enumerate(string[substr:substr+512]):
+            # verbose(" Transmitting byte: "+i.__str__()+" which is " + v.__str__())
+            send_byte(v)
+        time.sleep(0)
+    veryverbose(" Transmitting done!")
+
+
+def get_bytes(length):
+    class TimeOut(Exception):
+        pass
+
+    t = default_timeout
+    try:
+        # Make sure we have a byte to read...
+        while sys.stdin not in select.select([sys.stdin], [], [], 0)[0]:
+            t = t - 1
+            usleep(1)
+            if t is 0:
+                raise TimeOut
+        # verbose("GOT "+ord(byte).__str__())
+    except TimeOut:
+        log("get_byte"+timeout+ERROR)
+        send_bytes(timeout+ERROR)
+        exit(255)
+
+    try:
+        buf = sys.stdin.read(length)
+    except IOError:
+        log("IOError")
+        send_bytes("IO"+ERROR)
+        exit(255)
+
+    return buf
+
+
+def get_byte():
+    class TimeOut(Exception):
+        pass
+
+    t = default_timeout
+    try:
+        # Make sure we have a byte to read...
+        while sys.stdin not in select.select([sys.stdin], [], [], 0)[0]:
+            t = t - 1
+            usleep(1)
+            if t is 0:
+                raise TimeOut
+        # Read the byte we know, for sure, is there...
+        byte = sys.stdin.read(1)
+        verbose("GOT "+ord(byte).__str__())
+    except TimeOut:
+        log("get_byte"+timeout+ERROR)
+        send_bytes(timeout+ERROR)
+        exit(255)
+
+    return ord(byte)
+
+
+def send_byte(byte):
+    # global bcount
+    # verbose("ByteCount: "+bcount.__str__())
+    # verbose(" Sending "+byte.__str__())
+    # sys.stderr.write(chr(byte))
+    os.write(stderr, bytearray([byte]))
+    veryverbose(" Transmitted byte: "+byte.__str__())
+
+
+def swap_end_32(i):
+    return struct.unpack("<I", struct.pack(">I", i))[0]
+
+# Comms utilities
+def get_int(int_length):
+    veryverbose("Getting an int")
+    int_value = 0
+    while int_length:
+        veryverbose("getint "+"waiting for : "+int_length.__str__()+" bytes. ")
+        nextbyte = get_byte()
+        int_value = (int_value << 8) + nextbyte
+        veryverbose("getint "+"got: "+nextbyte.__str__()+" Value now: "+int_value.__str__()+". ")
+        int_length = int_length - 1
+    verbose("getint "+"final: "+int_value.__str__())
+    return int_value
+
+
+def get_string():
+    string = ""
+    byte = get_byte()
+    while byte is not 0:
+        string = string + str(unichr(byte))
+        veryverbose("getstring "+"got: "+byte.__str__()+" string now: "+string)
+        byte = get_byte()
+
+    verbose("getstring "+"final: "+string)
+    return string
+
+
+def send_ok():
+    send_bytes("OK\n")
+
+
+def data_pad(data, padding, data_len):
+    if not isinstance(padding, Iterable):
+        padding = [padding]
+    while data_len > 0:
+        data.extend(padding)
+        data_len = data_len - 1
+    return data
+
+
+# Logic
+def send_block_and_validate_nbn(blocklen):
+    verbose(" Reading in "+blocklen.__str__())
+    block = bytearray()
+    veryverbose(" Read in "+len(block).__str__())
+
+    checksum = (sum(block) % 256)
+    while True:
+        send_bytes(block)
+        verbose("checksum"+checksum.__str__())
+
+        send_byte(checksum)
+
+        if get_byte() == 33:                     # send Client confirmation that things worked
+            return True
+
+        log(" received checksum (sent "+checksum.__str__()+"ERR")
+
+
+# Data Utils
+def file_info_data(path):
+    data = [os.path.getsize(path), 0, 0]
+    with open(path) as filein:
+        for i, line in enumerate(filein):
+            if len(line) > data[2]:
+                data[2] = len(line)
+            pass
+    filein.close()
+    data[1] = i + 1
+
+    return data
+
+
+# Functions
+def file_ls_nbn(partition, parameters):
+    label = "file_ls_nbn"
+    directory = ""
+    filefilter = default_filter
+    page = 0
+    log("Starting "+label)
+
+    send_ok()
+
+    if len(parameters) > 1:
+        [directory, page] = [parameters[0], int(parameters[1])]
+    elif len(parameters) == 1:
+        [directory] = parameters
+
+    # Remove any slashes
+    path = re.sub('/{2,}', '/', partitions[partition]+directory+'/')
+    filefilter = re.sub('/{2,}', '/', (path+filefilter).replace("*/", "/"))
+
+    verbose(" Opening " + filefilter)
+    listing = glob.glob(filefilter)
+    if path != partitions[partition]:
+        listing.insert(0, "..")
+
+    listinglen = len(listing)
+    listingpages = int(listinglen / 8) + 1
+    verbose(" Found " + len(listing).__str__() + "entries, total " + listingpages.__str__() + " pages")
+
+    if not args.debug:
+        verbose("Directory Listing Length: "+listinglen.__str__())
+        send_byte((listinglen >> 8) & 255)
+        send_byte((listinglen >> 0) & 255)
+        verbose("Directory Listing Pages: "+listingpages.__str__())
+        send_byte((listingpages >> 8) & 255)
+        send_byte((listingpages >> 0) & 255)
+    else:
+        print("Directory Listing Length: "+listinglen.__str__())
+        print("Directory Listing Pages: "+listingpages.__str__())
+
+    listingpage = listing[page*8:(page*8)+16]
+
+    # getting length of list
+    pagelen = len(listingpage)
+    # size of our block
+    blocksize = 1       # start at 1, checksum is 1
+
+    # Iterating the index
+    # same as 'for i in range(len(list))'
+    for i in range(pagelen):
+        filename = listingpage[i].replace(path, "")
+        blocksize = blocksize + len(filename) + 6       # 32bit int size, plus 8bits for type flags
+
+    if not args.debug:
+        verbose(" Block Size: " + blocksize.__str__())
+        send_byte((blocksize >> 8) & 255)
+        send_byte((blocksize >> 0) & 255)
+    else:
+        print("BLOCKSIZE: " + blocksize.__str__())
+
+    for i in range(pagelen):
+        filesize = os.path.getsize(listingpage[i])
+        filetype = 0 if os.path.isdir(listingpage[i]) else 1
+        # view[i] = view[i].replace(path, "")
+        if not args.debug:
+            verbose(" Type: " + filetype.__str__())
+            send_byte(filetype)
+            verbose(" Size: " + filesize.__str__())
+            send_byte((filesize >> 0) & 255)
+            send_byte((filesize >> 8) & 255)
+            send_byte((filesize >> 16) & 255)
+            send_byte((filesize >> 24) & 255)
+            send_bytes(listingpage[i].replace(path, ""))
+            verbose(" Name: " + listingpage[i].replace(path, ""))
+            send_byte(0)
+        else:
+            print(" Type: " + ("FILE" if filetype else "DIR"))
+            print(" Size: " + filesize.__str__())
+            print(" Name: " + listingpage[i].replace(path, ""))
+            print("ENDPART")
+
+    if not args.debug:
+        send_byte(0)        # CBA checksum
+    else:
+        print(" Checksum: faked")
+        print("ENDBLOCK")
+
+    #
+    # log(" PAG: "+pagination.__str__())
+    #
+    # list_files(partitions[partition] + directory)
+
+    log("Done "+label)
+
+
+def file_info_sid(path):
+    # MAGIC NUMBER
+    send_bytes("SID\00")
+
+    # Read sidfile header
+    filein = open(path, "rb")
+
+    sid_header = bytearray()
+    sid_header.extend(filein.read(118))
+
+    # Switch endian
+    sid_header[0x04:0x06] = reversed(sid_header[0x04:0x06])     # Version
+    sid_header[0x06:0x08] = reversed(sid_header[0x06:0x08])     # dataOffset
+    sid_header[0x08:0x0A] = reversed(sid_header[0x08:0x0A])     # loadAddress
+    sid_header[0x0A:0x0C] = reversed(sid_header[0x0A:0x0C])     # initAddress
+    sid_header[0x0C:0x0E] = reversed(sid_header[0x0C:0x0E])     # playAddress
+    sid_header[0x0E:0x10] = reversed(sid_header[0x0E:0x10])     # songs
+    sid_header[0x10:0x12] = reversed(sid_header[0x10:0x12])     # startSong
+    sid_header[0x12:0x16] = reversed(sid_header[0x12:0x16])     # speed
+
+    # Send header
+    send_bytes(sid_header)
+    # Done
+    send_ok()
+
+
+def file_info_mod(path):
+    modlog = "/tmp/modheader.log"
+
+    mod_name = "Unknown"
+    mod_type = "Unknown"
+    mod_length = "Unknown"
+    mod_patterns = "Unknown"
+    mod_instruments = "Unknown"
+    mod_samples = "Unknown"
+    mod_channels = "Unknown"
+    mod_duration = "Unknown"
+
+    # MAGIC NUMBER
+    send_bytes("MOD\00")
+    # send_byte(0)
+
+    CLIAPI = '/usr/bin/xmp --driver=null --load-only '+path+' > '+modlog+' 2>&1'
+
+    verbose(CLIAPI)
+    os.system(CLIAPI)
+    # Read mod meta, and turn into header header
+    filein = open(modlog, "r")
+    lines = filein.readlines()
+
+    for line in lines:
+        if ":" not in line:
+            continue
+        elif line.startswith("Module name  : "):
+            mod_name = line[15:].replace("\n", "")
+        elif line.startswith("Module type  : "):
+            mod_type = line[15:].replace("\n", "")
+        elif line.startswith("Module length: "):
+            mod_length = line[15:].replace("\n", "")
+        elif line.startswith("Patterns     : "):
+            mod_patterns = line[15:].replace("\n", "")
+        elif line.startswith("Instruments  : "):
+            mod_instruments = line[15:].replace("\n", "")
+        elif line.startswith("Samples      : "):
+            mod_samples = line[15:].replace("\n", "")
+        elif line.startswith("Channels     : "):
+            mod_channels = line[15:].replace("\n", "")
+        elif line.startswith("Duration     : "):
+            mod_duration = line[15:].replace("min", "m").replace("\n", "")
+
+    mod_header = bytearray()
+
+    mod_header.extend(mod_name)
+    data_pad(mod_header, 0, 32-len(mod_name))           # Name
+
+    mod_header.extend(mod_type)
+    data_pad(mod_header, 0, 32-len(mod_type))           # Type / Creator
+
+    mod_header.extend(mod_length)
+    data_pad(mod_header, 0, 16-len(mod_length))         # Len
+
+    mod_header.extend(mod_patterns)
+    data_pad(mod_header, 0, 2-len(mod_patterns))        # Pattern Count (as string)
+
+    mod_header.extend(mod_instruments)
+    data_pad(mod_header, 0, 2-len(mod_instruments))     # Instrument Count (as string)
+
+    mod_header.extend(mod_samples)
+    data_pad(mod_header, 0, 2-len(mod_samples))         # Sample Count (as string)
+
+    mod_header.extend(mod_channels)
+    data_pad(mod_header, 0, 16-len(mod_channels))       # Channel Config (as string)
+
+    mod_header.extend(mod_duration)
+    data_pad(mod_header, 0, 8-len(mod_duration))        # Duration (as string)
+
+    # Send header
+    send_bytes(mod_header)
+    # Done
+    send_ok()
+
+
+def file_info_sndh(path):
+    sndhlog = "/tmp/sndhheader.log"
+
+    sndh_name = "Unknown"
+    sndh_artist = "Unknown"
+    sndh_type = "Unknown"
+    sndh_duration = "0"
+    sndh_tracks = "0"
+    sndh_hardware = "Unknown"
+
+    # MAGIC NUMBER
+    send_bytes("SNDH")
+
+    CLIAPI = '/usr/bin/info68 -A -- '+path+' > '+sndhlog+' 2>&1'
+    verbose(CLIAPI)
+    os.system(CLIAPI)
+
+# Read mod meta, and turn into header header
+    filein = open(sndhlog, "r")
+    lines = filein.readlines()
+
+    for line in lines:
+        if ":" not in line:
+            continue
+        elif line.startswith("track: "):
+            break
+        elif line.startswith("title: "):
+            sndh_name = line[7:].replace("\n", "")
+        elif line.startswith("artist: "):
+            sndh_artist = line[8:].replace("\n", "")
+        elif line.startswith("format: "):
+            sndh_type = line[8:].replace("\n", "")
+        elif line.startswith("time-ms: "):
+            sndh_duration = line[9:].replace("\n", "")
+            seconds = int(sndh_duration)/1000
+            minutes = int(seconds/60)
+            seconds = seconds % 60
+            sndh_duration = str(minutes)+"m"+(str(seconds).rjust(1, '0'))
+        elif line.startswith("tracks: "):
+            sndh_tracks = line[7:].replace("\n", "")
+        elif line.startswith("hardware: "):
+            sndh_hardware = line[10:].replace("\n", "")
+
+    sndh_header = bytearray()
+
+    sndh_header.extend(sndh_name)
+    data_pad(sndh_header, 0, 32-len(sndh_name))         # Name
+
+    sndh_header.extend(sndh_artist)
+    data_pad(sndh_header, 0, 32-len(sndh_artist))       # Artist
+
+    sndh_header.extend(sndh_type)
+    data_pad(sndh_header, 0, 8-len(sndh_type))          # Type
+
+    sndh_header.extend(sndh_duration)
+    data_pad(sndh_header, 0, 8-len(sndh_duration))       # Len
+
+    sndh_header.extend(sndh_tracks)
+    data_pad(sndh_header, 0, 2-len(sndh_tracks))        # Track Count (as string)
+
+    sndh_header.extend(sndh_hardware)
+    data_pad(sndh_header, 0, 8-len(sndh_hardware))      # Hardware Spec
+
+    # Send header
+    send_bytes(sndh_header)
+    # Done
+    send_ok()
+
+
+def file_info_mp3(path):
+    mp3log = "/tmp/mp3header.log"
+
+    mp3_name = "Unknown"
+    mp3_artist = "Unknown"
+    mp3_comment = "Unknown"
+    mp3_album = "Unknown"
+    mp3_year = "Unknown"
+    mp3_duration = "Unknown"
+
+    # MAGIC NUMBER
+    send_bytes("MP3\00")
+
+    CLIAPI = '/usr/bin/mpg123 -a null -d 99999999999999999999999999999999 '+path+' > '+mp3log+' 2>&1'
+    verbose(CLIAPI)
+    os.system(CLIAPI)
+
+    # Read mod meta, and turn into header header
+    filein = open(mp3log, "r")
+    lines = filein.readlines()
+
+    for line in lines:
+        if line.startswith("["):
+            mp3_duration = line[1:].split("]")[0].replace(":", "m")
+            mp3_duration = mp3_duration+"s"
+        elif ":" not in line:
+            continue
+        elif line.startswith("Title: "):
+            mp3_name = line[9:].replace("\n", "").split("Artist: ")[0].rstrip(" ")
+            mp3_artist = line.split("Artist: ")[1].replace("\n", "").rstrip(" ")
+        elif line.startswith("Comment: "):
+            mp3_comment = line[9:].replace("\n", "")
+        elif line.startswith("Album: "):
+            mp3_album = line[9:].replace("\n", "")
+        elif line.startswith("Year: "):
+            mp3_year = line[9:].replace("\n", "")
+
+    mp3_header = bytearray()
+
+    mp3_header.extend(mp3_name)
+    data_pad(mp3_header, 0, 40-len(mp3_name[:40]))      # Name
+
+    mp3_header.extend(mp3_artist)
+    data_pad(mp3_header, 0, 40-len(mp3_artist[:40]))    # Artist
+
+    mp3_header.extend(mp3_comment)
+    data_pad(mp3_header, 0, 40-len(mp3_comment[:40]))   # Comment
+
+    mp3_header.extend(mp3_duration)
+    data_pad(mp3_header, 0, 8-len(mp3_duration[:8]))    # Len
+
+    mp3_header.extend(mp3_album)
+    data_pad(mp3_header, 0, 40-len(mp3_album[:40]))     # Album
+
+    mp3_header.extend(mp3_year)
+    data_pad(mp3_header, 0, 8-len(mp3_year[:8]))        # Year
+
+    # Send header
+    send_bytes(mp3_header)
+    # Done
+    send_ok()
+
+
+def file_info_generic(filetype, path):
+    if len(filetype) > 4:
+        send_bytes(filetype[0:3])
+    else:
+        send_bytes(filetype)
+        padding = 4 - len(filetype)
+        while padding:
+            send_byte(0)
+            padding = padding - 1
+    [filesize, lines, longest_line] = file_info_data(path)
+    generic_header = bytearray()
+
+    generic_header.extend(struct.pack(">I", swap_end_32(lines)))
+    generic_header.extend(struct.pack(">I", swap_end_32(filesize)))
+    generic_header.extend(struct.pack(">I", swap_end_32(longest_line)))
+
+    # Send header
+    send_bytes(generic_header)
+    # Done
+    send_ok()
+
+
+def file_info_nbn(partition, path):
+    label = "file_info_nbn"
+    log("Starting "+label)
+
+    verbose(" Opening " + path)
+    # Remove any slashes
+    path = re.sub('/{2,}', '/', partitions[partition]+'/'+path)
+    verbose(" Opening " + path)
+    filetype = os.path.splitext(path)[1][1:].upper()
+    log(" Filetype: "+filetype)
+    send_ok()
+
+    if filetype == "SID":
+        file_info_sid(path)
+        exit(0)
+    elif filetype == "MOD":
+        file_info_mod(path)
+        exit(0)
+    elif filetype == "SND" or filetype == "SDH" or filetype == "SNDH":
+        file_info_sndh(path)
+        exit(0)
+    elif filetype == "MP3":
+        file_info_mp3(path)
+        exit(0)
+    elif filetype == "TXT":
+        # MAGIC NUMBER
+        file_info_generic(filetype, path)
+        exit(0)
+    # else:
+    #     send_bytes("")
+
+
+# Main
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='NextPi File Transmitter')
+
+    # default options
+    parser.add_argument('-v', action="store_true")          # Version, and done
+    parser.add_argument('-debug', action="store_true")      # Enable debug mode, cooked term
+    parser.add_argument('-vl', action="store_true")         # Verbose Logging
+    parser.add_argument('-vvl', action="store_true")        # Very Verbose Logging
+    # Real options
+    parser.add_argument('-ls',  action="store", type=int, default=255)  # File Listing
+    # Real options
+    parser.add_argument('-info',  nargs='+')                            # File Meta
+    # Args
+    parser.add_argument("params",  action='store', nargs='*', type=str, default="")   # Sub folder
+    args = parser.parse_args()
+
+    stdin = sys.stdin.fileno()
+    stderr = sys.stderr.fileno()
+
+    if not args.debug:
+        # Make stdin non blocking
+        old_stdin_flags = fcntl.fcntl(stdin, fcntl.F_GETFL)
+        # old_stderr_flags = fcntl.fcntl(stderr, fcntl.F_GETFL)
+        fcntl.fcntl(stdin, fcntl.F_SETFL, old_stdin_flags | os.O_NONBLOCK)
+        # fcntl.fcntl(stdin, fcntl.F_SETFL, old_stderr_flags | os.O_NONBLOCK)
+        old_stdin_settings = termios.tcgetattr(stdin)
+        # old_stderr_settings = termios.tcgetattr(stderr)
+        tty.setraw(stdin)
+        # tty.setraw(stderr)
+
+    if os.path.exists("/tmp/uihelper.log"):
+        copyfile("/tmp/uihelper.log", "/tmp/uihistory.log")
+    logfile = open("/tmp/uihelper.log", "w")
+
+    startTime = datetime.now()
+    verbose(" Verbose log started at "+startTime.__str__())
+
+    if args.v:
+        version()
+        exit(0)
+
+    if args.ls != 255:
+        file_ls_nbn(args.ls, args.params)
+        exit(0)
+
+    if args.info and len(args.info) is 2:
+        file_info_nbn(int(args.info[0]), args.info[1])
+        exit(0)
+
+    exit(0)

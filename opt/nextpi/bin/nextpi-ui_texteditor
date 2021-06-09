@@ -1,0 +1,270 @@
+#!/usr/bin/python -u
+
+# Base us
+import argparse
+
+# Filecatcher
+import os
+import sys
+import tty
+import termios
+import select
+import fcntl
+# File Lister
+import glob
+import re
+from shutil import copyfile
+from datetime import datetime
+from collections import Iterable
+import time
+usleep = lambda x: time.sleep(x/1000.0)
+
+timeout = " Timeout"
+ERROR = " ERROR\n"
+
+partitions = ['/', '/ram/', '/NextPi/']
+default_filter = "/*"
+default_timeout = 1000
+max_filesize = 4294967295
+current_version = "0.99E"
+
+
+# "System"
+def version():
+    verbose("version: "+current_version)
+    send_bytes(current_version)
+
+
+def exit(e):
+    if not args.debug:
+        termios.tcsetattr(stdin, termios.TCSADRAIN, old_stdin_settings)
+        # termios.tcsetattr(stderr, termios.TCSADRAIN, old_stderr_settings)
+        fcntl.fcntl(stdin, fcntl.F_SETFL, old_stdin_flags)
+        # fcntl.fcntl(stderr, fcntl.F_SETFL, old_stderr_flags)
+    # os.system("stty echo")
+    # os.system("reset")
+
+    verbose(" Verbose exiting gracefully - elapsed " + (datetime.now() - startTime).__str__())
+    logfile.flush()
+    logfile.close()
+    sys.exit(e)
+
+
+def log(d):
+    logfile.write(d+'\n')
+    logfile.flush()
+
+
+def verbose(d):
+    if args.vl:
+        logfile.write(" V>  ")
+        log(d)
+
+
+def veryverbose(d):
+    if args.vvl:
+        logfile.write(" V>  ")
+        log(d)
+
+
+# Comms primitives
+def send_bytes(string):
+    if isinstance(string, str):
+        b = bytearray()
+        b.extend(string)
+        string = b
+    veryverbose(" Transmitting: "+string.__str__())
+    for substr in range(0, len(string), 512):
+        verbose(substr.__str__()+" parts sent")
+        for i, v in enumerate(string[substr:substr+512]):
+            # verbose(" Transmitting byte: "+i.__str__()+" which is " + v.__str__())
+            send_byte(v)
+        time.sleep(0)
+    veryverbose(" Transmitting done!")
+
+
+def get_bytes(length):
+    class TimeOut(Exception):
+        pass
+
+    t = default_timeout
+    try:
+        # Make sure we have a byte to read...
+        while sys.stdin not in select.select([sys.stdin], [], [], 0)[0]:
+            t = t - 1
+            usleep(1)
+            if t is 0:
+                raise TimeOut
+        # verbose("GOT "+ord(byte).__str__())
+    except TimeOut:
+        log("get_byte"+timeout+ERROR)
+        send_bytes(timeout+ERROR)
+        exit(255)
+
+    try:
+        buf = sys.stdin.read(length)
+    except IOError:
+        log("IOError")
+        send_bytes("IO"+ERROR)
+        exit(255)
+
+    return buf
+
+
+def get_byte():
+    class TimeOut(Exception):
+        pass
+
+    t = default_timeout
+    try:
+        # Make sure we have a byte to read...
+        while sys.stdin not in select.select([sys.stdin], [], [], 0)[0]:
+            t = t - 1
+            usleep(1)
+            if t is 0:
+                raise TimeOut
+        # Read the byte we know, for sure, is there...
+        byte = sys.stdin.read(1)
+        verbose("GOT "+ord(byte).__str__())
+    except TimeOut:
+        log("get_byte"+timeout+ERROR)
+        send_bytes(timeout+ERROR)
+        exit(255)
+
+    return ord(byte)
+
+
+def send_byte(byte):
+    # global bcount
+    # verbose("ByteCount: "+bcount.__str__())
+    # verbose(" Sending "+byte.__str__())
+    # sys.stderr.write(chr(byte))
+    os.write(stderr, bytearray([byte]))
+    veryverbose(" Transmitted byte: "+byte.__str__())
+
+
+# Comms utilities
+def get_int(int_length):
+    veryverbose("Getting an int")
+    int_value = 0
+    while int_length:
+        veryverbose("getint "+"waiting for : "+int_length.__str__()+" bytes. ")
+        nextbyte = get_byte()
+        int_value = (int_value << 8) + nextbyte
+        veryverbose("getint "+"got: "+nextbyte.__str__()+" Value now: "+int_value.__str__()+". ")
+        int_length = int_length - 1
+    verbose("getint "+"final: "+int_value.__str__())
+    return int_value
+
+
+def get_string():
+    string = ""
+    byte = get_byte()
+    while byte is not 0:
+        string = string + str(unichr(byte))
+        veryverbose("getstring "+"got: "+byte.__str__()+" string now: "+string)
+        byte = get_byte()
+
+    verbose("getstring "+"final: "+string)
+    return string
+
+
+def send_ok():
+    send_bytes("OK\n")
+
+
+def data_pad(data, padding, data_len):
+    if not isinstance(padding, Iterable):
+        padding = [padding]
+    while data_len > 0:
+        data.extend(padding)
+        data_len = data_len - 1
+    return data
+
+
+# Logic
+def send_block_and_validate_nbn(blocklen):
+    verbose(" Reading in "+blocklen.__str__())
+    block = bytearray()
+    veryverbose(" Read in "+len(block).__str__())
+
+    checksum = (sum(block) % 256)
+    while True:
+        send_bytes(block)
+        verbose("checksum"+checksum.__str__())
+
+        send_byte(checksum)
+
+        if get_byte() == 33:                     # send Client confirmation that things worked
+            return True
+
+        log(" received checksum (sent "+checksum.__str__()+"ERR")
+
+
+# Functions
+def text_insert(parameters):
+    label = "text_insert"
+    log("Starting "+label)
+
+    send_ok()
+
+    if len(parameters) == 4:
+        [partition, path, start, end] = parameters
+        partition = int(partition)
+    else:
+        exit(-1)
+
+    # Remove any slashes
+    path = re.sub('/{2,}', '/', partitions[partition]+path)
+
+    log(path)
+
+    log("Done "+label)
+
+
+# Main
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='NextPi Text Editor API')
+
+    # default options
+    parser.add_argument('-v', action="store_true")          # Version, and done
+    parser.add_argument('-debug', action="store_true")      # Enable debug mode, cooked term
+    parser.add_argument('-vl', action="store_true")         # Verbose Logging
+    parser.add_argument('-vvl', action="store_true")        # Very Verbose Logging
+    # Real options
+    parser.add_argument('-read',  nargs='+')
+    # Args
+    parser.add_argument("params",  action='store', nargs='*', type=str, default="")   # Sub folder
+    args = parser.parse_args()
+
+    stdin = sys.stdin.fileno()
+    stderr = sys.stderr.fileno()
+
+    if not args.debug:
+        # Make stdin non blocking
+        old_stdin_flags = fcntl.fcntl(stdin, fcntl.F_GETFL)
+        fcntl.fcntl(stdin, fcntl.F_SETFL, old_stdin_flags | os.O_NONBLOCK)
+        old_stdin_settings = termios.tcgetattr(stdin)
+        tty.setraw(stdin)
+
+    if os.path.exists("/tmp/uihelper.log"):
+        copyfile("/tmp/uihelper.log", "/tmp/uihistory.log")
+    logfile = open("/tmp/uihelper.log", "w")
+
+    startTime = datetime.now()
+    verbose(" Verbose log started at "+startTime.__str__())
+
+    if args.v:
+        version()
+        exit(0)
+
+    # VERB
+    # ARG 1:    Partition ID            INT
+    # ARG 2:    Relative Path           STRING
+    # ARG 3:    Start Line              INT
+    # ARG 4:    Line Count              INT
+    if args.read and len(args.read) is 4:
+        text_insert(args.read)
+        exit(0)
+
+    exit(0)
