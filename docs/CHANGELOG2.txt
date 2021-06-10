@@ -1,22 +1,91 @@
 CHANGELOG for NextPi2 - See CHANGELOG1 for DietPi1 development
 
 Version 1.13A DietPi for Next - Shout, SHOUT - LET IT ALL OUT 🗯️
+ * New Build system in use - part 1 - allows NextPi to be build on NextPi for
+   more reliable binary compilation, and testing.
+ * sc68 moved to binary packages to make building easier
+
+Things that DIDNOT change since Alpha 1.12A
  * MIDI Playback API now supports three modes LQ, MQ, and HQ - of various CPU
    usage levels - based on sample-rate, allowing more complex MIDI files to be
    supported without audible slowdown during playback
- * New Build system in use - part 1 - allows NextPi to be build on NextPi for
-   more reliable binary compilation, and testing.
 
-Things that DIDNOT change since Alpha 1.04A
-
-Things that DIDNOT change since Alpha 1.03A
+Things that DIDNOT change since Alpha 1.11A
  * MIDI Playback API
+ * Added fluidsynth, GM & GS sound fonts
+ * Added Freepats sound patches - a free patch set suitable for MIDI audio
+   synthesis.  It is not complete, nor comprehensive yet, and most, if not all
+   patches are in the old and limited GUS patch format.  It is, however, the 
+   sole DFSG-compliant patch set in existence so far.
+ 
+Things that DIDNOT change since Alpha 1.10A
  * SD card scheme now 16GB with Extreme Over-Provisioning (see INSTALL.txt)
+ * sjasmplus updated to 1.18.2
+ * debian base updated to 1.4.11
+ * apt-transport-https 1.4.11
+ * apt-utils 1.4.11
+ * base-files updated to 9.9+rpi1+deb9u13
+ * ca-certificates updated to 20200601~deb9u2
+ * caca-utils updated to 0.99.beta19-2.1~deb9u2
+ * curl updated to 7.52.1-5+deb9u14
+ * e2fslibs updated to 1.43.4-2+deb9u2
+ * e2fsprogs updated to 1.43.4-2+deb9u2
+ * libapt-inst2.0 updated to 1.4.11
+ * libapt-pkg5.0 updated to 1.4.11
+ * libbsd0 updated to 0.8.3-1+deb9u1
+ * libcaca0 updated to 0.99.beta19-2.1~deb9u2
+ * libcomerr2 updated to 1.43.4-2+deb9u2
+ * libcurl3 updated to 7.52.1-5+deb9u14
+ * libcurl3-gnutls updated to 7.52.1-5+deb9u14
+ * libdbus-1-3 updated to 1.10.32-0+deb9u1
+ * libdns-export162 updated to 1:9.10.3.dfsg.P4-12.3+deb9u8
+ * libexpat1 updated to 2.2.0-2+deb9u3
+ * libflac8 updated to 1.3.2-2+deb9u1
+ * libfreetype6 updated to 2.6.3-3.2+deb9u2
+ * libglib2.0-0 updated to 2.50.3-2+deb9u2
+ * libgnutls30 updated to 3.5.8-5+deb9u5
+ * libgssapi-krb5-2 updated to 1.15-1+deb9u2
+ * libidn11 updated to 1.33-1+deb9u1
+ * libisc-export160 updated to 1:9.10.3.dfsg.P4-12.3+deb9u8
+ * libjpeg62-turbo updated to 1:1.5.1-2+deb9u1
+ * libk5crypto3 updated to 1.15-1+deb9u2
+ * libkrb5-3 updated to 1.15-1+deb9u2
+ * libkrb5support0 updated to 1.15-1+deb9u2
+ * libldap-2.4-2 updated to 2.4.44+dfsg-5+deb9u8
+ * libldap-common updated to 2.4.44+dfsg-5+deb9u8 all [upgradable from: 2.4.44+dfsg-5+deb9u1]
+ * liblz4-1 updated to 0.0~r131-2+deb9u1
+ * libmagic-mgc updated to 1:5.30-1+deb9u3
+ * libmagic1 updated to 1:5.30-1+deb9u3
+ * libp11-kit0 updated to 0.23.3-2+deb9u1
+ * libpython2.7-minimal updated to 2.7.13-2+deb9u5
+ * libpython2.7-stdlib updated to 2.7.13-2+deb9u5
+ * libsasl2-2 updated to 2.1.27~101-g0780600+dfsg-3+deb9u1
+ * libsasl2-modules-db updated to 2.1.27~101-g0780600+dfsg-3+deb9u1
+ * libsndfile1 updated to 1.0.27-3+deb9u1
+ * libsqlite3-0 updated to 3.16.2-5+deb9u3
+ * libss2 updated to 1.43.4-2+deb9u2
+ * libssl1.0.2 updated to 1.0.2u-1~deb9u4
+ * libssl1.1 updated to 1.1.0l-1~deb9u3
+ * libtiff5 updated to 4.0.8-2+deb9u5
+ * libwavpack1 updated to 5.0.0-2+deb9u3
+ * libx11-6 updated to 2:1.6.4-3+deb9u4
+ * libx11-data updated to 2:1.6.4-3+deb9u4 all [upgradable from: 2:1.6.4-3+deb9u1]
+ * libx11-xcb1 updated to 2:1.6.4-3+deb9u4
+ * libx11-data updated to 2:1.6.4-3+deb9u4 all [upgradable from: 2:1.6.4-3+deb9u1]
+ * libx11-xcb1 updated to 2:1.6.4-3+deb9u4
+ * login updated to 1:4.4-4.1+deb9u1
+ * openssl updated to 1.1.0l-1~deb9u3
+ * passwd updated to 1:4.4-4.1+deb9u1
+ * perl-base updated to 5.24.1-3+deb9u7
+ * python2.7 updated to 2.7.13-2+deb9u5
+ * python2.7-minimal updated to 2.7.13-2+deb9u5
+ * screen updated to 4.5.0-6+deb9u1
 
 Things that DIDNOT change since Alpha 1.02A
  * Text to Speech support added
  * SD card new "Persistent Cache" partition added
  * Version formatting corrected
+ * Added espeak-ng + datafiles
 
 Things that DIDNOT change since Alpha 1.1a
  * Text to Speech support added
