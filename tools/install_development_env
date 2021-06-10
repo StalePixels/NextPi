@@ -1,5 +1,5 @@
 #!/bin/bash
-DEV_PACKAGE_LIST="subversion build-essential autoconf libtool automake pkg-config libao-dev git hexdump"
+DEV_PACKAGE_LIST="subversion build-essential autoconf libtool automake pkg-config libao-dev git bsdmainutils porg"
 
 #We want to be root, it saves time later...
 if [ "$EUID" -ne 0 ]
