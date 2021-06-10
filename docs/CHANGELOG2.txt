@@ -1,0 +1,29 @@
+CHANGELOG for NextPi2 - See CHANGELOG1 for DietPi1 development
+
+Version 1.13A DietPi for Next - Shout, SHOUT - LET IT ALL OUT 🗯️
+ * MIDI Playback API now supports three modes LQ, MQ, and HQ - of various CPU
+   usage levels - based on sample-rate, allowing more complex MIDI files to be
+   supported without audible slowdown during playback
+ * New Build system in use - part 1 - allows NextPi to be build on NextPi for
+   more reliable binary compilation, and testing.
+
+Things that DIDNOT change since Alpha 1.04A
+
+Things that DIDNOT change since Alpha 1.03A
+ * MIDI Playback API
+ * SD card scheme now 16GB with Extreme Over-Provisioning (see INSTALL.txt)
+
+Things that DIDNOT change since Alpha 1.02A
+ * Text to Speech support added
+ * SD card new "Persistent Cache" partition added
+ * Version formatting corrected
+
+Things that DIDNOT change since Alpha 1.1a
+ * Text to Speech support added
+ * SD card scheme now 8GB 
+
+Things that DIDNOT change since Beta 0.98
+ * Fix a bug in nextpi-dongle_disable (thanks em00k)
+ * Add support for faster, error correcting nextpi-file_send and 
+   nextpi-file_receive APIs (piput and piget to follow)
+ * LOTS of typos in the document that no-one reported now fixed

@@ -7,5 +7,3 @@ TODO
  * disable network updates of packages
 
  * disable linux trying to set volume on Next's DAC
-
- * Document NextDAC Device Tree Overlay source, and release

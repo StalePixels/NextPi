@@ -1,9 +1,21 @@
+CHANGELOG for NextPi1 - See CHANGELOG2 for DietPi2 development
+
+Version 0.99E DietPi for Next - Long, and stale - like last years baguette 🥖
+ * Fix a bug in nextpi-dongle_disable (thanks em00k)
+ * Add support for faster, error correcting nextpi-file_send and 
+   nextpi-file_receive APIs (piput and piget to follow)
+ * LOTS of typos in the document that no-one reported now fixed
+ 
+( This has been in limited testing since September 29, 2020 - released due to no
+  bugs reported)
+-Xalior, 28 May 2021
+
 Version 0.99D DietPi for Next - Always believe in your soul 🥇
  * Added MD5 sums to builds assets for SMS validation
  * Disable DietPi account -- use root account, password is still "dietpi"
  * Fixed bug in df-h generation that was accidentally logging size of currently attached PlusPacks and mounted memory
 
-Things that NOTDID change since Beta 0.98
+Things that DIDNOT change since Beta 0.98
  * Removed private test files, ready for GM - these will now live in the Media PlusPack
  * nextpi-admin_clean now defaults to RAM cleaner, all other options behind flags
  * nextpi-play_silence for when you kill a player, and want to send NULL to the DAC (this is a hack. to be patched post GM)
@@ -11,7 +23,7 @@ Things that NOTDID change since Beta 0.98
  * Removed Terminex.nex, to prevent confusion
  * Updated Terminex.snx, now handles "much bigger files", and uses nextpi-file_stream system method to base64 decode the results. Thanks David Saphier/emook!
 
-Things that NOTDID change since Beta 0.97
+Things that DIDNOT change since Beta 0.97
  * PlusPack builder now does nexted zips in nexted zips, so you need less diskspace to extract and select pluspacks
  * Docs and labeling tweaks, reading for GM
  * Added nextpi-plus_activate, nextpi-plus_list, nextpi_plus-unlock and nextpi-plus_lock
