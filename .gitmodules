@@ -4,3 +4,6 @@
 [submodule "packages/csid/src"]
 	path = packages/csid/src
 	url = git@github.com:StalePixels/csid-mod.git
+[submodule "packages/sc68/src"]
+	path = packages/sc68/src
+	url = git@github.com:StalePixels/sc68.git
