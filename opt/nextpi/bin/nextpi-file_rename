@@ -2,4 +2,9 @@
 . /opt/nextpi/bin/func/nextpi-globals
 args_required $@
 
-echo Coming Soon
+
+/bin/mount /PCache -o remount,rw
+
+nextpi-cache rename $1 $2 $3
+
+/bin/mount /PCache -o remount,ro

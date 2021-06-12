@@ -1,9 +1,10 @@
 CHANGELOG for NextPi2 - See CHANGELOG1 for DietPi1 development
 
-Version 1.13A DietPi for Next - Shout, SHOUT - LET IT ALL OUT 🗯️
+Version 1.13A DietPi for Next - Shout, SHOUT - Let is all out... 🗯️
  * New Build system in use - part 1 - allows NextPi to be build on NextPi for
    more reliable binary compilation, and testing.
  * sc68 moved to binary packages to make building easier
+ * Surpressed kernel bootlogs
 
 Things that DIDNOT change since Alpha 1.12A
  * MIDI Playback API now supports three modes LQ, MQ, and HQ - of various CPU

@@ -5,7 +5,6 @@ Version 0.99E DietPi for Next - Long, and stale - like last years baguette 🥖
  * Add support for faster, error correcting nextpi-file_send and 
    nextpi-file_receive APIs (piput and piget to follow)
  * LOTS of typos in the document that no-one reported now fixed
- 
 ( This has been in limited testing since September 29, 2020 - released due to no
   bugs reported)
 -Xalior, 28 May 2021

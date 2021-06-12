@@ -10,10 +10,12 @@ NextPi_3) 1880064 1966079   86016   42M  e W95 FAT16 (LBA)
 1) /boot                    -- DietPi defaults and system files
 2) /                        -- EXT4 master filesystem, read only
 3) /mnt/nextpiuser_internal -- User read write, aliased to /NextPi
+3) /PCache                  -- NextPi managed Persistent Cache folder 
+
 Also, not listed above:
-4) /ram		            -- User read write, erased every reboot
+5) /ram                     -- User read write, erased every reboot
 And, optionally:
-5) /mnt/dongle              -- If found, /dev/sda1 or /dev/sda - mounted at boot
+6) /mnt/dongle              -- If found, /dev/sda1 or /dev/sda - mounted at boot
 
 Partitions are managed via UUIDs to prevent USB devices from preventing boot.
 

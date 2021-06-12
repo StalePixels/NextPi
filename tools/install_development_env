@@ -35,6 +35,11 @@ echo -n "  package list - Adding:"
 echo $DEV_PACKAGE_LIST
 apt install -y $DEV_PACKAGE_LIST
 
+echo "Installing python2 pip packages"
+for i in `cat docs/python-packages.txt `; do
+    pip2 install $i
+done
+
 echo "Installing NextPi specific folder stucture to match NextPi runtime..."
 # RAMdir (faked to disk, since we can't conveniently always reboot the dev environment) 
 if [ -d "/ram" ] || [ -L "/ram" ] ; then
@@ -54,6 +59,10 @@ else
     ln -s "$NEXTPIPATH/PCache" /PCache 
 fi
 
+echo "  Creating PCache datastore"
+mkdir -pv "$NEXTPIPATH/PCache/DATA"
+mkdir -pv "$NEXTPIPATH/PCache/CATALOG"
+
 # Userdir
 if [ -d "/NextPi" ] || [ -F "/NextPi" ]; then
     echo "  /NextPi already exists..."
@@ -62,3 +71,4 @@ else
     mkdir -pv "$NEXTPIPATH/userdir/nextpi"
     ln -s "$NEXTPIPATH/userdir" /NextPi 
 fi
+

@@ -3,6 +3,7 @@
 import os
 import sys
 
+
 def help(scriptname = None):
 	if scriptname == None:
 		scriptname = os.path.basename(sys.argv[0])
@@ -11,6 +12,8 @@ def help(scriptname = None):
 	print
 	print "    Please visit http://specnext.dev/wiki/Pi:"+scriptname.split("-")[1].replace("_","-")
 	print
+	exit()
+
 
 def main():
 	help(sys.argv[1])

@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+import os
+import sys
+import hashlib
+from pylib import help
+
+if __name__ == "__main__":
+	if len(sys.argv) == 1:
+		help.help(sys.argv[0])
+
+	function = sys.argv[1].upper()
+
+	if function == "BUCKET" or function == "NAMESPACE":
+		sys.argv = ["nextpi-cache_bucket"] + sys.argv[2:]
+
+		execfile(os.path.dirname(__file__)+"/nextpi-cache_bucket")
+
