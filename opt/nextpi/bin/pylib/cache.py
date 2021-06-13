@@ -29,6 +29,7 @@ def write_disable():
 def bucket_getnamehash(name):
 	return hashlib.md5(name).hexdigest()
 
+
 # Create a new bucket.
 #	Does not error if already exists.
 #	Does not touch bucket if already exists.
@@ -44,12 +45,12 @@ def bucket_create(namehash, comment):
 		bucketDB.close()
 		
 	newDB.write(namehash + ":" + comment + "\n")
-	if not os.path.isdir(DATADIR+namehash):
-		os.mkdir(DATADIR+namehash)
 	
 	newDB.close()
 	
 	write_enable()
+	if not os.path.isdir(DATADIR+namehash):
+		os.mkdir(DATADIR+namehash)
 	shutil.move(TMPDIR+BUCKETDB, CATALOGDIR+BUCKETDB)
 	write_disable()	
 
@@ -125,14 +126,13 @@ def bucket_delete(namehash):
 		newDB.close()
 	else:
 		error.exit(error.ERR_MISSING_DEPENDENCY)
-		
+	
 	if thisBucket is None:
 		os.remove(TMPDIR+BUCKETDB)
 		return False
-	else:
-		shutil.rmtree(DATADIR+thisBucket[0])
 	
 	write_enable()
+	shutil.rmtree(DATADIR+thisBucket[0])
 	shutil.move(TMPDIR+BUCKETDB, CATALOGDIR+BUCKETDB)
 	write_disable()
 	return thisBucket[0]

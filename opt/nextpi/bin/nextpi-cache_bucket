@@ -8,18 +8,18 @@ from pylib import error, cache, utils, help
 def bucket(args):
 	if len(args) < 2:
 		error.exit(error.ERR_INVALID_PARAMETERS)
-	
+
 	function = args[0].upper()
 	if function == "INIT" or function == "NEW":
 		namehash = cache.bucket_getnamehash(args[1])
 		cache.bucket_create(namehash, args[1])
 		utils.exit(namehash)
-		
+
 	elif function == "TOUCH" or function == "ACCESS":
 		namehash = cache.bucket_getnamehash(args[1])
 		cache.bucket_touch(namehash)
 		utils.exit()
-		
+
 	elif function == "QUERY" or function == "FIND":
 		namehash = cache.bucket_getnamehash(args[1])
 		if cache.bucket_find(namehash):
@@ -34,7 +34,7 @@ def bucket(args):
 			utils.exit(str(bucketsize))
 		else:
 			error.exit(error.ERR_BUCKET_NOT_FOUND)
-			
+
 	elif function == "DELETE" or function == "RM":
 		namehash = cache.bucket_getnamehash(args[1])
 		results = cache.bucket_delete(namehash)
