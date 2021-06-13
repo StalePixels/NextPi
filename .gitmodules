@@ -4,3 +4,6 @@
 [submodule "packages/csid/src"]
 	path = packages/csid/src
 	url = git@github.com:StalePixels/csid-mod.git
+[submodule "clients/pisend"]
+	path = clients/pisend
+	url = https://github.com/em00k/pisend-source

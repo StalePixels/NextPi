@@ -7,14 +7,20 @@ that regard it's worth remembering that many features of NextPi won't be in a
 usable state, or sometimes testable at all without these tools or manual effort.
 
 The lack of these tools/features _IS_ _NOT_ _A_ _BUG_.  This repository, and
-archive is for NextPi primarily.   
+archive is for NextPi primarily.
 
 There will be, from time to time, some tools that may feature in the /testing 
-directory - but these are convenience items, not intended to be part of the
-Next operating system.  Any formal/completed tools that are pending addition
-to the OS, or tightly coupled to this release, will be (if they exist at any
-one time) in /NextZXOS and then the approriate directory that they are intended
-to be in, eventually, when merged.
+directory - but these are convenience items, and possibly not intended to be
+part of the Next operating system.  Any formal/completed tools that are pending
+addition to the OS, or tightly coupled to this release, will be (if they exist
+at any one time) in /NextZXOS and then the approriate directory that they are
+intended to be in, eventually, when merged.  
+
+The source of any open source Pi tools that are provided to work with NextPi 
+can be found as submodules in /clients - these aren't intended to be exclusively
+for NextZXOS, although currently the only ones that exist are for 
+NextZXOS/ESXDOS - pull requests for submodules to different tools and operating
+systems are welcomed.
 
 Both the tools in /testing, and in /NextZXOS are to be used at your peril - 
 caveat emptor - you have been warned.
