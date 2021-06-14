@@ -22,5 +22,6 @@ for NextZXOS, although currently the only ones that exist are for
 NextZXOS/ESXDOS - pull requests for submodules to different tools and operating
 systems are welcomed.
 
-Both the tools in /testing, and in /NextZXOS are to be used at your peril - 
-caveat emptor - you have been warned.
+The tools in /testing, /NextZXOS and linked in /clients are to be used at your
+peril - caveat emptor - buyer beware - your milage may vary - danger ahead - 
+you have been warned.

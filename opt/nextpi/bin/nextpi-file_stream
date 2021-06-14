@@ -23,7 +23,8 @@
 #       -n      Use NBN2 packet format (16k blocks, 8bit carrysum, ?! ctrlcode -
 #                       see nextpi-file_receive documentation for more details)
 #
-#       -x      Use XOR summing instead of 8bit carrysum.  (see python for no details)
+#       -x      Use XOR summing instead of 8bit carrysum (see python for no 
+#                       details - this is not implimented yet)
 
 while getopts "nx" opt; do
     case "$opt" in

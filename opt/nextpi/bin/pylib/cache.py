@@ -168,7 +168,7 @@ def file_get():
 	cache.cache_write_disable()
 
 
-def file_put():
+def file_put(buckethash, filename):
 	utils.root_check()
 
 

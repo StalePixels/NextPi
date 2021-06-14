@@ -7,3 +7,6 @@
 [submodule "clients/pisend"]
 	path = clients/pisend
 	url = https://github.com/em00k/pisend-source
+[submodule "clients/pitools"]
+	path = clients/pitools
+	url = https://github.com/StalePixels/pitools

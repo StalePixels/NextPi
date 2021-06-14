@@ -1,8 +1,21 @@
 CHANGELOG for NextPi2 - See CHANGELOG1 for DietPi1 development
 
-Version 1.13A DietPi for Next - Shout, SHOUT - Let is all out... 🗯️
+Version 1.14A DietPi for Next - Shout, SHOUT - Let is all out... 🗯️
+ * New NextPi CLIAPI commands:
+   nextpi-file_transmit - download a file from the Pi to the Next
+   nextpi-file_receive - upload a file to the Pi from the Next
+ * Updated NextPi CLIAPI commands:
+   nextpi-file_stream - added commandline switches to handle new protocols,
+       when invoking without a switch it remains NextPi1 compatible
+ * New and Updated NextPi documentation for _LOTS_ of things.  
+   Items worthy of note:
+     Partitions.txt
+     cli_error_codes.txt
+     
+   
+Things that DIDNOT change since 1.13A 
  * New Build system in use - part 1 - allows NextPi to be build on NextPi for
-   more reliable binary compilation, and testing.
+   more reliable binary compilation, and testing
  * sc68 moved to binary packages to make building easier
  * Surpressed kernel bootlogs
 
@@ -17,7 +30,7 @@ Things that DIDNOT change since Alpha 1.11A
  * Added Freepats sound patches - a free patch set suitable for MIDI audio
    synthesis.  It is not complete, nor comprehensive yet, and most, if not all
    patches are in the old and limited GUS patch format.  It is, however, the 
-   sole DFSG-compliant patch set in existence so far.
+   sole DFSG-compliant patch set in existence so far
  
 Things that DIDNOT change since Alpha 1.10A
  * SD card scheme now 16GB with Extreme Over-Provisioning (see INSTALL.txt)
