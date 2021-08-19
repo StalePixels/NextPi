@@ -35,8 +35,8 @@ This is mounted RO, and is the System ROM -- this can only be edited after
  the "usual debian methods" is possible, but is still highly discouraged due to
  the potential conflicts and misconfigurations it could cause.  If you plan to
  do this please ensure you understand the repercussions.  To help mitigate this
- happening "by accident" the "apt" tool is aliased to a message telling you to
- explicitly perform the action with a fully qualified pathname.
+ happening "by accident" the "apt"-get tool is aliased to a message telling you
+ to explicitly perform the action with a fully qualified pathname.
  
 Partition 3
 -----------

@@ -56,11 +56,17 @@ def send_bytes(string):
         b = bytearray()
         b.extend(string)
         string = b
+    sent = 0
+    log("send_bytes len == "+len(string).__str__())
     for substr in range(0, len(string), 512):
         verbose(substr.__str__()+" parts sent")
+        sent = sent + len(string[substr:substr+512])
+        verbose("Sending "+len(string[substr:substr+512]).__str__()+" more bytes")
         for i, v in enumerate(string[substr:substr+512]):
             send_byte(v)
+            # verbose((substr+i).__str__()+" parts sent")
             time.sleep(0)
+    verbose("SENT IN TOTAL: "+sent.__str__());
 
 
 def get_bytes(length):
@@ -79,6 +85,7 @@ def get_bytes(length):
     except TimeOut:
         log("get_byte"+timeout+ERROR)
         send_bytes(timeout+ERROR)
+        
         exit(255)
 
     try:
@@ -149,6 +156,7 @@ def get_string():
 
 
 def send_ok():
+    verbose("SEND: OK")
     send_bytes("OK\n")
 
 
@@ -194,23 +202,34 @@ def file_sender_nbn(blocksize):
         log("max_filesize"+ERROR)
         send_bytes("max_filesize"+ERROR)
         exit(255)
+        
+    verbose("Size 1:"+((size >> 24) & 255).__str__());
     send_byte((size >> 24) & 255)
+    verbose("Size 2:"+((size >> 16) & 255).__str__());
     send_byte((size >> 16) & 255)
+    verbose("Size 3:"+((size >> 8) & 255).__str__());
     send_byte((size >> 8) & 255)
+    verbose("Size 4:"+((size >> 0) & 255).__str__());
     send_byte((size >> 0) & 255)
     verbose("SIZ done")
 
     blocks = int(size/blocksize)
     log(" BLK: "+blocks.__str__())
+    verbose("Blocks 1:"+((blocks >> 24) & 255).__str__());
     send_byte((blocks >> 24) & 255)
+    verbose("Blocks 2:"+((blocks >> 16) & 255).__str__());
     send_byte((blocks >> 16) & 255)
+    verbose("Blocks 3:"+((blocks >> 8) & 255).__str__());
     send_byte((blocks >> 8) & 255)
+    verbose("Blocks 4:"+((blocks >> 0) & 255).__str__());
     send_byte((blocks >> 0) & 255)
     verbose("BLK done")
 
     remainder = size % blocksize
     log(" REM: "+remainder.__str__())
+    verbose("Remainder 1:"+((remainder >> 8) & 255).__str__());
     send_byte((remainder >> 8) & 255)
+    verbose("Remainder 2:"+((remainder >> 0) & 255).__str__());
     send_byte((remainder >> 0) & 255)
     verbose("REM done")
 

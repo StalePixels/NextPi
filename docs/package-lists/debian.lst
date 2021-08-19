@@ -323,3 +323,4 @@ xmp						install
 xxd						install
 xz-utils					install
 zlib1g:armhf					install
+fdupes					install

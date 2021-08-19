@@ -243,6 +243,7 @@ if __name__ == "__main__":
     old_settings = termios.tcgetattr(stdin)
     tty.setraw(stdin)
     logfile = open("/tmp/uihelper.log", "w")
+    log("NextPi File Receiver running")
 
     verbose("log++")
 

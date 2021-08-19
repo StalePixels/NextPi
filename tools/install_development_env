@@ -72,3 +72,5 @@ else
     ln -s "$NEXTPIPATH/userdir" /NextPi 
 fi
 
+# Set up the testing environment to not require root
+touch /tmp/nextpi.dev

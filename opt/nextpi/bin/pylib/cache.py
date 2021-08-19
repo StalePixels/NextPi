@@ -29,28 +29,33 @@ def write_disable():
 def bucket_getnamehash(name):
 	return hashlib.md5(name).hexdigest()
 
-
+# Get complete path to bucket on currently active cache
+#   Returns absolute path string
+def bucket_getpath(buckethash):
+	return DATADIR+buckethash
+	
 # Create a new bucket.
 #	Does not error if already exists.
 #	Does not touch bucket if already exists.
-def bucket_create(namehash, comment):
+def bucket_create(buckethash, comment):
 	utils.root_check()
 	newDB = open(TMPDIR+BUCKETDB,"w")
 	if os.path.isfile(CATALOGDIR+BUCKETDB):
 		bucketDB = open(CATALOGDIR+BUCKETDB,"r")
 		for bucketDBentry in bucketDB:
 			bucketEntry = bucketDBentry.split(":")
-			if bucketEntry[0] != namehash:
+			if bucketEntry[0] != buckethash:
 				newDB.write(bucketDBentry)
 		bucketDB.close()
 		
-	newDB.write(namehash + ":" + comment + "\n")
+	newDB.write(buckethash + ":" + comment + "\n")
 	
 	newDB.close()
 	
 	write_enable()
-	if not os.path.isdir(DATADIR+namehash):
-		os.mkdir(DATADIR+namehash)
+	bucket_path = bucket_getpath(buckethash)
+	if not os.path.isdir(bucket_path):
+		os.mkdir(bucket_path)
 	shutil.move(TMPDIR+BUCKETDB, CATALOGDIR+BUCKETDB)
 	write_disable()	
 
@@ -59,7 +64,7 @@ def bucket_create(namehash, comment):
 #	Generates a ERR_MISSING_DEPENDENCY if DB not found
 #	Generates a ERR_BUCKET_NOT_FOUND if Bucket not found
 #	Returns True if bucket found, and touched
-def bucket_touch(namehash):
+def bucket_touch(buckethash):
 	utils.root_check()
 	thisBucket = None
 	if os.path.isfile(CATALOGDIR+BUCKETDB):
@@ -67,7 +72,7 @@ def bucket_touch(namehash):
 		newDB = open(TMPDIR+BUCKETDB,"w")
 		for bucketDBentry in bucketDB:
 			bucketEntry = bucketDBentry.split(":")
-			if bucketEntry[0] != namehash:
+			if bucketEntry[0] != buckethash:
 				newDB.write(bucketDBentry)
 			else:
 				thisBucket = bucketDBentry
@@ -93,12 +98,12 @@ def bucket_touch(namehash):
 #	Returns True if found.
 #	Returns False if not found
 #	Generates a ERR_MISSING_DEPENDENCY if DB not found
-def bucket_find(namehash):
+def bucket_find(buckethash):
 	if os.path.isfile(CATALOGDIR+BUCKETDB):
 		bucketDB = open(CATALOGDIR+BUCKETDB,"r")
 		for bucketDBentry in bucketDB:
 			bucketEntry = bucketDBentry.split(":")
-			if bucketEntry[0] == namehash:
+			if bucketEntry[0] == buckethash:
 				bucketDB.close()
 				return True
 		return False
@@ -107,10 +112,10 @@ def bucket_find(namehash):
 
 
 # Delete a bucket and its contents.
-#	Returns namehash if found.
+#	Returns buckethash if found.
 #	Returns False if not found
 #	Generates a ERR_MISSING_DEPENDENCY if DB not found
-def bucket_delete(namehash):
+def bucket_delete(buckethash):
 	utils.root_check()
 	thisBucket = None
 	if os.path.isfile(CATALOGDIR+BUCKETDB):
@@ -118,7 +123,7 @@ def bucket_delete(namehash):
 		newDB = open(TMPDIR+BUCKETDB,"w")
 		for bucketDBentry in bucketDB:
 			bucketEntry = bucketDBentry.split(":")
-			if bucketEntry[0] != namehash:
+			if bucketEntry[0] != buckethash:
 				newDB.write(bucketDBentry)
 			else:
 				thisBucket = bucketEntry
@@ -132,7 +137,7 @@ def bucket_delete(namehash):
 		return False
 	
 	write_enable()
-	shutil.rmtree(DATADIR+thisBucket[0])
+	shutil.rmtree(bucket_getpath(thisBucket[0]))
 	shutil.move(TMPDIR+BUCKETDB, CATALOGDIR+BUCKETDB)
 	write_disable()
 	return thisBucket[0]
@@ -143,9 +148,9 @@ def bucket_delete(namehash):
 #	Generates an error otherwise:
 #		ERR_BUCKET_NOT_FOUND if bucket not found
 #		ERR_MISSING_DEPENDENCY if bucket is a file, not a dir
-def bucket_size(namehash):
-	if bucket_find(namehash):
-		bucketpath = DATADIR+namehash
+def bucket_size(buckethash):
+	if bucket_find(buckethash):
+		bucketpath = bucket_getpath(buckethash)
 		if os.path.isdir(bucketpath):
 			total_size = 0
 			for dirpath, dirnames, filenames in os.walk(bucketpath):
@@ -161,23 +166,44 @@ def bucket_size(namehash):
 		error.exit(error.ERR_BUCKET_NOT_FOUND)
 
 
-def file_get():
-	utils.root_check()
-	cache.cache_write_enable()
-	
-	cache.cache_write_disable()
+# Get complete path to file on currently active cache
+#   Returns absolute path string
+def file_get_path(buckethash, filehash):
+	return bucket_getpath(buckethash)+"/"+filehash
+
+
+# Compute bucketname file name + size
+#   Is currently MD5 sum based, may change at later date to reduce clashes.
+def file_getnamehash(filename):
+	if os.path.isfile(filename):
+		filesize = os.path.getsize(filename)
+		hashsalt  = filename + ":" + filesize.__str__()
+		return hashlib.md5(hashsalt).hexdigest()
+	error.exit(error.ERR_FILE_NOT_FOUND)
 
 
 def file_put(buckethash, filename):
 	utils.root_check()
+	filehash = file_getnamehash(filename)
+	write_enable()
+	shutil.copy(filename, file_get_path(buckethash, filehash))
+	write_disable()
+	return filehash
 
 
 def file_rename():
 	utils.root_check()
+	write_enable()
+	
+	write_disable()
 
 
+def file_get():
+	utils.root_check()
+	
+	
 def file_delete():
 	utils.root_check()
-	cache.cache_write_enable()
+	write_enable()
 	
-	cache.cache_write_disable()
+	write_disable()
