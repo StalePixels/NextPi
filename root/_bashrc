@@ -1,0 +1,12 @@
+#!/bin/bash
+
+## SETUP PATHS
+
+NEXTPIPATH=/ram/nextpi:/mnt/dongle/nextpi:/PlusPack/Developer/nextpi:/PlusPack/Media/nextpi:/PlusPack/Runtime/nextpi:/PlusPack/User/nextpi:/PCache/nextpi/bin:/NextPi/nextpi:/opt/nextpi/bin
+
+case ":$PATH:" in
+	*$NEXTPIPATH*) /bin/true ;;
+	*) PATH=$NEXTPIPATH:$PATH ;;
+esac
+
+
