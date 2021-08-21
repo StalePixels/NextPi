@@ -170,22 +170,28 @@ def bucket_size(buckethash):
 #   Returns absolute path string
 def file_get_path(buckethash, filehash):
 	return bucket_getpath(buckethash)+"/"+filehash
+	
+# Generate the actual hash as used in the cachestore
+#	Returns 32byte hash string
+def file_generatehash(filename, filesize):
+	return filename + ":" + filesize.__str__()
 
 
 # Compute bucketname file name + size
 #   Is currently MD5 sum based, may change at later date to reduce clashes.
-def file_getnamehash(filepath):	
+def file_getnamehash(filepath, filename=None):	
 	if os.path.isfile(filepath):
 		filesize = os.path.getsize(filepath)
-		filename = os.path.basename(filepath)
-		hashsalt  = filename + ":" + filesize.__str__()
+		if filename == None:
+			filename = os.path.basename(filepath)
+		hashsalt  = file_generatehash(filename, filesize)
 		return hashlib.md5(hashsalt).hexdigest()
 	error.exit(error.ERR_FILE_NOT_FOUND)
 
 
-def file_put(buckethash, filepath):
+def file_put(buckethash, filepath, forcedname=None):
 	utils.root_check()
-	filehash = file_getnamehash(filepath)
+	filehash = file_getnamehash(filepath, forcedname)
 	write_enable()
 	shutil.copy(filepath, file_get_path(buckethash, filehash))
 	write_disable()
@@ -196,8 +202,12 @@ def file_get():
 	utils.root_check()
 	
 	
-def file_delete():
+def file_delete(buckethash, filehash):
 	utils.root_check()
-	write_enable()
-	
-	write_disable()
+	filepath = file_get_path(buckethash, filehash)
+	if os.path.exists(filepath):
+		write_enable()
+		os.remove(filepath)
+		write_disable()
+		return
+	error.exit(error.ERR_FILE_NOT_FOUND)

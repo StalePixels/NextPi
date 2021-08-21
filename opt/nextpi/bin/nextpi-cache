@@ -2,7 +2,7 @@
 import os
 import sys
 import hashlib
-from pylib import help, cache
+from pylib import help, cache, error
 
 if __name__ == "__main__":
 	if len(sys.argv) == 1:
@@ -27,3 +27,7 @@ if __name__ == "__main__":
 	elif sys.argv[1] == "ADMIN_WRITE_DISABLE":
 		cache.write_disable()
 		exit
+		
+	else:
+		print "WUT: " + sys.argv[0]
+		error.exit(error.ERR_INVALID_PARAMETERS)
