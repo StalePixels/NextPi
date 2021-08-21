@@ -174,28 +174,22 @@ def file_get_path(buckethash, filehash):
 
 # Compute bucketname file name + size
 #   Is currently MD5 sum based, may change at later date to reduce clashes.
-def file_getnamehash(filename):
-	if os.path.isfile(filename):
-		filesize = os.path.getsize(filename)
+def file_getnamehash(filepath):	
+	if os.path.isfile(filepath):
+		filesize = os.path.getsize(filepath)
+		filename = os.path.basename(filepath)
 		hashsalt  = filename + ":" + filesize.__str__()
 		return hashlib.md5(hashsalt).hexdigest()
 	error.exit(error.ERR_FILE_NOT_FOUND)
 
 
-def file_put(buckethash, filename):
+def file_put(buckethash, filepath):
 	utils.root_check()
-	filehash = file_getnamehash(filename)
+	filehash = file_getnamehash(filepath)
 	write_enable()
-	shutil.copy(filename, file_get_path(buckethash, filehash))
+	shutil.copy(filepath, file_get_path(buckethash, filehash))
 	write_disable()
 	return filehash
-
-
-def file_rename():
-	utils.root_check()
-	write_enable()
-	
-	write_disable()
 
 
 def file_get():
