@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+import os
+import sys
+import hashlib
+from pylib import error, cache, utils, help
+
+
+def files(args):
+	if len(args) < 3:
+		error.exit(error.ERR_INVALID_PARAMETERS)
+
+	function = args[0].upper()
+	buckethash = args[1]
+
+	if not cache.bucket_find(buckethash):
+		error.exit(error.ERR_BUCKET_NOT_FOUND)
+		
+	if function == "PUT" or function == "STORE" or function == "ADD":
+		namehash = cache.file_put(buckethash, args[2])
+		
+		cache.bucket_touch(buckethash)
+		utils.exit(namehash)
+
+	elif function == "RENAME" or function == "REN":
+		if len(sys.argv) < 4:
+			error.exit(error.ERR_INVALID_PARAMETERS)
+		
+		oldnamehash = args[2]
+		newname = args[3]
+		
+		oldfile = cache.file_get_path(buckethash, oldnamehash)
+		newhashname = cache.file_put(buckethash, oldfile, newname)
+		cache.file_delete(buckethash, oldnamehash)
+		cache.bucket_touch(buckethash)
+		utils.exit(newhashname)
+
+	elif function == "GET" or function == "RETRIEVE":
+		# namehash = cache.file_get(args[1])
+		# cache.bucket_touch(namehash)
+		utils.exit()
+
+	elif function == "DELETE" or function == "RM" or function == "REMOVE" or function == "DEL":
+		oldnamehash = args[2]
+		
+		cache.file_delete(buckethash, oldnamehash)
+		cache.bucket_touch(buckethash)
+		
+		utils.exit()
+
+	elif function == "QUERY" or function == "CHECK" or function == "VALIDATE":
+		# namehash = cache.bucket_getnamehash(args[1])
+		# cache.bucket_touch(namehash)
+		# utils.exit()
+		
+		# namehash = cache.bucket_getnamehash(args[1])
+		# cache.bucket_touch(namehash)
+		utils.exit()
+
+	else:
+		print "WUT: " + args[0]
+		error.exit(error.ERR_INVALID_PARAMETERS)
+
+
+if __name__ == "__main__":
+	if len(sys.argv)>2:
+		files(sys.argv[1:])
+	else:
+		help.help(sys.argv[0])

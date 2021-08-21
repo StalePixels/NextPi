@@ -1,0 +1,54 @@
+#!/bin/bash
+. /opt/nextpi/bin/func/nextpi-globals
+
+Z88DK199PATH="/opt/nextpi/z88dk/1.99C/bin"
+Z88DK2009CPATH="/opt/nextpi/z88dk/2.0/bin"
+Z88DK210CPATH="/opt/nextpi/z88dk/2.1/bin"
+Z88DK220CPATH="/opt/nextpi/z88dk/2.2pre/bin"
+
+PATH=`echo $PATH | sed 's#/opt/nextpi/z88dk/[.[A-Za-z0-9]*/bin:##g'`
+
+if [[ $1 == "1.99" ]]; then
+    echo "Setting Z88DK environment to point to 1.99C"
+    echo
+    export $Z88DK199PATH:$PATH
+    echo
+elif [[ $1 == "1.99C" ]]; then
+    echo "Setting Z88DK environment to point to 1.99C"
+    echo
+    export $Z88DK199PATH:$PATH
+    echo
+elif [[ $1 == "2.0" ]]; then
+    echo "Setting Z88DK environment to point to 2.0"
+    echo
+    export $Z88DK200PATH:$PATH
+    echo
+elif [[ $1 == "2.00" ]]; then
+    echo "Setting Z88DK environment to point to 2.0"
+    echo
+    export $Z88DK200PATH:$PATH
+    echo
+elif [[ $1 == "2.1" ]]; then
+    echo "Setting Z88DK environment to point to 2.1"
+    echo
+    export $Z88DK210PATH:$PATH
+    echo
+elif [[ $1 == "2.10" ]]; then
+    echo "Setting Z88DK environment to point to 2.1"
+    echo
+    export $Z88DK210PATH:$PATH
+    echo
+elif [[ $1 == "2.2" ]]; then
+    echo "Setting Z88DK environment to point to 2.2"
+    echo
+    export $Z88DK220PATH:$PATH
+    echo
+elif [[ $1 == "2.2pre" ]]; then
+    echo "Setting Z88DK environment to point to 2.2"
+    echo
+    export $Z88DK220PATH:$PATH
+    echo
+else
+    echo "No such Z88DK version known"
+    echo "   TRY one of: 1.99, 2.0, 2.1 or 2.2"
+fi
