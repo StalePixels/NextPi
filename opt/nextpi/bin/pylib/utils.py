@@ -11,8 +11,8 @@ def root_check():
 def exit(message = None):
 	
 	if message:
-		sys.stdout.write("OK^"+message)
+		sys.stdout.write("OK^"+message+"\n")
 		sys.exit(0)
 	else:
-		sys.stdout.write("OK")
+		sys.stdout.write("OK"+"\n")
 		sys.exit(0)

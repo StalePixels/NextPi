@@ -22,20 +22,24 @@ if __name__ == "__main__":
 	# The following admin command require you to enter them in uppercase!
 	elif sys.argv[1] == "ADMIN_WRITE_ENABLE":
 		cache.write_enable()
-		exit
 
 	elif sys.argv[1] == "ADMIN_WRITE_DISABLE":
 		cache.write_disable()
-		exit
 
-	# elif sys.argv[1] == "ADMIN_INIT":
-		
-	# 	exit
+	elif sys.argv[1] == "ADMIN_INIT":
+		cache.initalise()
 
-	# elif sys.argv[1] == "ADMIN_RESET":
+	elif sys.argv[1] == "ADMIN_REMOVE":
+		cache.remove()
+
+	elif sys.argv[1] == "ADMIN_RESET":
+		cache.remove()
+		cache.initalise()
+	
+	# elif sys.argv[1] == "PURGE":
 		
 	# 	exit
 		
 	else:
-		print "WUT: " + sys.argv[0]
+		print "WUT: " + sys.argv[0] + "\n"
 		error.exit(error.ERR_INVALID_PARAMETERS)

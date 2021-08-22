@@ -1,6 +1,18 @@
 CHANGELOG for NextPi2 - See CHANGELOG1 for DietPi1 development
 
-Version 1.50A DietPi for Next - Shout, SHOUT - Let is all out... 🗯️
+Version 1.52A DietPi for Next - Shout, SHOUT - Let is all out... 🗯️
+ * Fixed newline at end of cache error codes breaking client readback
+
+Things that DIDNOT change since 1.51A 
+ * New nextpi-cache admin options:
+    ADMIN_INIT - used to turn an empty directory into a cache (if mounting to
+      an external USB drive - not yet suported, planned future usecase, or was
+      manually removed in error for any reason)
+    ADMIN_RESET - used to remove all the cache contents, and then recreate
+      it and the catalog, if it becomes corrupt beyond use, uses ADMIN_INIT to
+      recreate the cache instance.
+
+Things that DIDNOT change since 1.50A 
  * New NextPi CLIAPI commands:
    nextp-z88dk_switch - use to setup a specific SDK varient
    z88dk now setup by default, system will use 2.1

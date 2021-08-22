@@ -24,6 +24,50 @@ def write_disable():
 		os.system('/bin/mount '+PCACHE+' -o remount,ro');
 
 
+# Initalise an empty cache, presumes no cache already exists in PCACHE location.
+def initalise():
+	if os.path.isdir(PCACHE):
+		print PCACHE+" exists"
+		write_enable()
+		print "Creating cache data directory: "+DATADIR
+		if os.path.exists(DATADIR):
+			write_disable()
+			error.exit(error.ERR_UNEXPECTED_STATE)
+		os.mkdir(DATADIR)
+		print "Creating cache catalog directory: "+CATALOGDIR
+		if os.path.exists(CATALOGDIR):
+			write_disable()
+			error.exit(error.ERR_UNEXPECTED_STATE)
+		os.mkdir(CATALOGDIR)
+		print "Creating empty bucketlist: "+CATALOGDIR+BUCKETDB
+		if os.path.exists(CATALOGDIR+BUCKETDB):
+			write_disable()
+			error.exit(error.ERR_UNEXPECTED_STATE)
+		open(CATALOGDIR+BUCKETDB, 'a').close()
+		write_disable()
+		exit()
+	error.exit(error.ERR_MISSING_DEPENDENCY)
+
+
+# Initalise an empty cache, presumes no cache already exists in PCACHE location.
+def remove():
+	if os.path.isdir(PCACHE):
+		print PCACHE+" exists"
+		write_enable()
+		print "Removing cache data directory: "+DATADIR
+		if not os.path.exists(DATADIR):
+			write_disable()
+			error.exit(error.ERR_UNEXPECTED_STATE)
+		shutil.rmtree(DATADIR)
+		print "Creating cache catalog directory: "+CATALOGDIR
+		if not os.path.exists(CATALOGDIR):
+			write_disable()
+			error.exit(error.ERR_UNEXPECTED_STATE)
+		shutil.rmtree(CATALOGDIR)
+		write_disable()
+		exit()
+	error.exit(error.ERR_MISSING_DEPENDENCY)
+
 # Compute bucketname from readable name.
 #   Is currently MD5 sum based, may change at later date to reduce clashes.
 def bucket_getnamehash(name):

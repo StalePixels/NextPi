@@ -16,20 +16,23 @@ def bucket(args):
 		utils.exit(namehash)
 
 	elif function == "TOUCH" or function == "ACCESS":
-		# namehash = cache.bucket_getnamehash(args[1])
-		cache.bucket_touch(args[1])
+		namehash = cache.bucket_getnamehash(args[1])
+		
+		cache.bucket_touch(namehash)
 		utils.exit()
 
 	elif function == "QUERY" or function == "FIND":
 		namehash = cache.bucket_getnamehash(args[1])
+		
 		if cache.bucket_find(namehash):
 			utils.exit(namehash)
 		else:
 			error.exit(error.ERR_BUCKET_NOT_FOUND)
 
 	elif function == "SIZE" or function == "QUOTA":
-		# namehash = cache.bucket_getnamehash(args[1])
-		bucketsize = cache.bucket_size(args[1])
+		namehash = cache.bucket_getnamehash(args[1])
+		
+		bucketsize = cache.bucket_size(namehash)
 		if bucketsize == 0:
 			utils.exit(str(bucketsize))
 		else:
@@ -37,6 +40,7 @@ def bucket(args):
 
 	elif function == "DELETE" or function == "RM":
 		namehash = cache.bucket_getnamehash(args[1])
+		
 		results = cache.bucket_delete(namehash)
 		if results:
 			utils.exit("Deleted "+results)
