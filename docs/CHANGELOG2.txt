@@ -4,8 +4,10 @@ Version 1.50A DietPi for Next - Shout, SHOUT - Let is all out... 🗯️
  * New NextPi CLIAPI commands:
    nextp-z88dk_switch - use to setup a specific SDK varient
    z88dk now setup by default, system will use 2.1
- * New nextpi-cache options:
+ * New nextpi-cache admin options:
     ADMIN_WRITE_DISABLE and ADMIN_WRITE_ENABLE -- use with caution!
+ * New nextpi-cache_file CLI:
+    PUT, RENAME, DELETE and GET files from the cache
  * Fixed Installation Type fingerprint
 
 Things that DIDNOT change since 1.40A 

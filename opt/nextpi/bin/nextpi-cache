@@ -27,6 +27,14 @@ if __name__ == "__main__":
 	elif sys.argv[1] == "ADMIN_WRITE_DISABLE":
 		cache.write_disable()
 		exit
+
+	# elif sys.argv[1] == "ADMIN_INIT":
+		
+	# 	exit
+
+	# elif sys.argv[1] == "ADMIN_RESET":
+		
+	# 	exit
 		
 	else:
 		print "WUT: " + sys.argv[0]

@@ -28,16 +28,11 @@ def files(args):
 		oldnamehash = args[2]
 		newname = args[3]
 		
-		oldfile = cache.file_get_path(buckethash, oldnamehash)
-		newhashname = cache.file_put(buckethash, oldfile, newname)
+		oldhashpath = cache.file_getpath(buckethash, oldnamehash)
+		newhashname = cache.file_put(buckethash, oldhashpath, newname)
 		cache.file_delete(buckethash, oldnamehash)
 		cache.bucket_touch(buckethash)
 		utils.exit(newhashname)
-
-	elif function == "GET" or function == "RETRIEVE":
-		# namehash = cache.file_get(args[1])
-		# cache.bucket_touch(namehash)
-		utils.exit()
 
 	elif function == "DELETE" or function == "RM" or function == "REMOVE" or function == "DEL":
 		oldnamehash = args[2]
@@ -48,14 +43,30 @@ def files(args):
 		utils.exit()
 
 	elif function == "QUERY" or function == "CHECK" or function == "VALIDATE":
-		# namehash = cache.bucket_getnamehash(args[1])
-		# cache.bucket_touch(namehash)
-		# utils.exit()
+		if len(sys.argv) < 4:
+			error.exit(error.ERR_INVALID_PARAMETERS)
 		
-		# namehash = cache.bucket_getnamehash(args[1])
-		# cache.bucket_touch(namehash)
-		utils.exit()
+		filename = args[2]
+		filesize = args[3]
+		
+		filehash = cache.file_generatehash(cache.file_generatesalt(filename, filesize))
+		filepath = cache.file_getpath(buckethash, filehash)
+		
+		if os.path.exists(filepath):
+			utils.exit(filehash)
+			
+		error.exit(error.ERR_FILE_NOT_FOUND)
 
+	elif function == "GET" or function == "RETRIEVE":
+		filehash = args[2]
+		
+		filepath = cache.file_getpath(buckethash, filehash)
+		
+		if os.path.exists(filepath):
+			utils.exit(filepath)
+			
+		error.exit(error.ERR_FILE_NOT_FOUND)
+		
 	else:
 		print "WUT: " + args[0]
 		error.exit(error.ERR_INVALID_PARAMETERS)

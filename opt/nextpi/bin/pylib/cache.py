@@ -168,13 +168,20 @@ def bucket_size(buckethash):
 
 # Get complete path to file on currently active cache
 #   Returns absolute path string
-def file_get_path(buckethash, filehash):
+def file_getpath(buckethash, filehash):
 	return bucket_getpath(buckethash)+"/"+filehash
 	
-# Generate the actual hash as used in the cachestore
-#	Returns 32byte hash string
-def file_generatehash(filename, filesize):
+	
+# Generate the actual hashsalt as used in the cachestore
+#	Returns string
+def file_generatesalt(filename, filesize):
 	return filename + ":" + filesize.__str__()
+	
+	
+# Generate the actual filehash as used in the cachestore
+#	Returns 32byte hash string
+def file_generatehash(hashsalt):
+	return hashlib.md5(hashsalt).hexdigest()
 
 
 # Compute bucketname file name + size
@@ -184,8 +191,8 @@ def file_getnamehash(filepath, filename=None):
 		filesize = os.path.getsize(filepath)
 		if filename == None:
 			filename = os.path.basename(filepath)
-		hashsalt  = file_generatehash(filename, filesize)
-		return hashlib.md5(hashsalt).hexdigest()
+		hashsalt  = file_generatesalt(filename, filesize)
+		return file_generatehash(hashsalt)
 	error.exit(error.ERR_FILE_NOT_FOUND)
 
 
@@ -193,7 +200,7 @@ def file_put(buckethash, filepath, forcedname=None):
 	utils.root_check()
 	filehash = file_getnamehash(filepath, forcedname)
 	write_enable()
-	shutil.copy(filepath, file_get_path(buckethash, filehash))
+	shutil.copy(filepath, file_getpath(buckethash, filehash))
 	write_disable()
 	return filehash
 
@@ -204,7 +211,7 @@ def file_get():
 	
 def file_delete(buckethash, filehash):
 	utils.root_check()
-	filepath = file_get_path(buckethash, filehash)
+	filepath = file_getpath(buckethash, filehash)
 	if os.path.exists(filepath):
 		write_enable()
 		os.remove(filepath)
