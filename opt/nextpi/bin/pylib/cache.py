@@ -67,7 +67,32 @@ def remove():
 		write_disable()
 		exit()
 	error.exit(error.ERR_MISSING_DEPENDENCY)
-
+	
+	
+# Get free space in PCACHE location.
+def space():
+	statvfs = os.statvfs(PCACHE)
+	freek = (statvfs.f_frsize * statvfs.f_bavail)/1024
+	utils.exit(freek.__str__())
+	
+	
+# Purge the last bucket, sorted by access time, most recent first
+def purge():
+	utils.root_check()
+	bucketDBentry = None
+	if os.path.isfile(CATALOGDIR+BUCKETDB):
+		bucketDB = open(CATALOGDIR+BUCKETDB,"r")
+		bucketDBentry = bucketDB.readline().rstrip()
+		bucketDB.close()
+		if bucketDBentry:
+			bucketEntry = bucketDBentry.split(":")
+			print bucketEntry
+			bucket_delete(bucketEntry[0])
+			utils.exit(bucketDBentry)
+	else:
+		error.exit(error.ERR_MISSING_DEPENDENCY)
+	error.exit(error.ERR_BUCKET_NOT_FOUND)
+	
 # Compute bucketname from readable name.
 #   Is currently MD5 sum based, may change at later date to reduce clashes.
 def bucket_getnamehash(name):

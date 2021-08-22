@@ -16,9 +16,14 @@ if __name__ == "__main__":
 		execfile(os.path.dirname(__file__)+"/nextpi-cache_bucket")
 	elif function == "FILE" or function == "STORE":
 		sys.argv = ["nextpi-cache_file"] + sys.argv[2:]
-
 		execfile(os.path.dirname(__file__)+"/nextpi-cache_file")
 
+	elif function == "SPACE":
+		cache.space()
+	
+	elif function == "PURGE":
+		cache.purge()
+		
 	# The following admin command require you to enter them in uppercase!
 	elif sys.argv[1] == "ADMIN_WRITE_ENABLE":
 		cache.write_enable()
@@ -36,9 +41,6 @@ if __name__ == "__main__":
 		cache.remove()
 		cache.initalise()
 	
-	# elif sys.argv[1] == "PURGE":
-		
-	# 	exit
 		
 	else:
 		print "WUT: " + sys.argv[0] + "\n"

@@ -9,7 +9,6 @@ def root_check():
 			error.exit(error.ERR_UID_ROOT_REQUIRED)
 			
 def exit(message = None):
-	
 	if message:
 		sys.stdout.write("OK^"+message+"\n")
 		sys.exit(0)

@@ -1,6 +1,19 @@
 CHANGELOG for NextPi2 - See CHANGELOG1 for DietPi1 development
 
-Version 1.52A DietPi for Next - Shout, SHOUT - Let is all out... 🗯️
+Version 1.53A DietPi for Next - Shout, SHOUT - Let is all out... 🗯️
+ * New nextpi-cache option:
+    SPACE - returns the quantity of empty space left in the cache, in bytes
+    PURGE - finds and removes a single bucket, based upon reverse chronological
+      order of access (i.e., the oldest buckets get removed first) 
+ * Fixed next-cache_file get now updates the bucket access time to make using
+      buckets so is "purge friendly" without explicitly having "touch" buckets
+ * Fixed a bunch of new typos in recently written docs
+
+Things that DID change since 1.52A 
+ * Broken - nextpi-z88dk_switch no longer works properly.  This needs to be 
+     reworked to handle the Z88DK environment variables properly on a RO SD card
+ 
+Things that DIDNOT change since 1.52A 
  * Fixed newline at end of cache error codes breaking client readback
 
 Things that DIDNOT change since 1.51A 
@@ -10,12 +23,12 @@ Things that DIDNOT change since 1.51A
       manually removed in error for any reason)
     ADMIN_RESET - used to remove all the cache contents, and then recreate
       it and the catalog, if it becomes corrupt beyond use, uses ADMIN_INIT to
-      recreate the cache instance.
+      recreate the cache instance
 
 Things that DIDNOT change since 1.50A 
  * New NextPi CLIAPI commands:
    nextp-z88dk_switch - use to setup a specific SDK varient
-   z88dk now setup by default, system will use 2.1
+   z88dk now setup by default, system will use 2.1 - see wiki for use details
  * New nextpi-cache admin options:
     ADMIN_WRITE_DISABLE and ADMIN_WRITE_ENABLE -- use with caution!
  * New nextpi-cache_file CLI:
@@ -41,7 +54,7 @@ Things that DIDNOT change since 1.30A
 
 Things that DIDNOT change since 1.22A 
  * New z88dk github version included, this now means four different versions 
-    to pick from - for various binary size, bugfix, and feature reasons.
+    to pick from - for various binary size, bugfix, and feature reasons
  
 Things that DIDNOT change since 1.21A 
  * New z88dk v2.0 & z88dk v1.99C included
@@ -56,8 +69,8 @@ Things that DIDNOT change since 1.14A
  * Updated NextPi CLIAPI commands:
    nextpi-file_stream - added commandline switches to handle new protocols,
        when invoking without a switch it remains NextPi1 compatible
- * New and Updated NextPi documentation for _LOTS_ of things.  
-   Items worthy of note:
+ * New and Updated NextPi documentation for _LOTS_ of things
+    Items worthy of note:
      Partitions.txt
      cli_error_codes.txt 
  * em00k's NextBuild included
